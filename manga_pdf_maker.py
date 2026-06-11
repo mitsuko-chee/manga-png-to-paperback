@@ -168,7 +168,6 @@ def main():
     skip_pages = 0
     skip_filenames = []
     white_filenames = []
-    all_white = False
     if numbering:
         stems = [p.stem for p in png_files]
         print("  ヒント: 番号をつけたい最初のファイル名（例: 001）を入力してください")
@@ -188,10 +187,9 @@ def main():
         if skip_input:
             skip_filenames = [s.strip() for s in skip_input.split(".") if s.strip()]
 
-        all_white = False
         print("  ヒント: ファイル名をドット区切りで入力してください（例: 005.010）")
         print("  不要な場合はそのままEnterを押してください")
-        white_input = input("白抜きにしたい特定のページはありますか？（ファイル名、ドット区切り）: ").strip()
+        white_input = input("強制的に白抜きにしたい特定のページはありますか？（ファイル名、ドット区切り）: ").strip()
         white_filenames = [s.strip() for s in white_input.split(".") if s.strip()] if white_input else []
 
     print("\nペーパーバックではページの端から10mm程度の余白があると読みやすくなります。")
@@ -213,9 +211,7 @@ def main():
         print(f"  ページ番号: {skip_pages + 1}枚目のファイルから開始")
     if skip_filenames:
         print(f"  番号スキップ: {', '.join(skip_filenames)}")
-    if all_white:
-        print(f"  白抜き     : すべて白文字")
-    elif white_filenames:
+    if white_filenames:
         print(f"  白抜き強制 : {', '.join(white_filenames)}")
     print(f"  余白追加  : {'あり（10mm）' if add_margin else 'なし'}")
     print(f"  出力先    : {output_path}\n")
@@ -231,7 +227,7 @@ def main():
         add_margin=add_margin,
         skip_filenames=skip_filenames,
         white_filenames=white_filenames,
-        all_white=all_white,
+        all_white=False,
     )
 
     print(f"\n✓ 完成: {output_path}")
