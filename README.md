@@ -37,7 +37,6 @@ curl -fsSL https://raw.githubusercontent.com/mitsuko-chee/manga-png-to-paperback
 5. ノンブル開始ページ（例：001）
 6. ノンブルをスキップするページ（扉・目次など）
 7. 強制的に白抜きにしたいページ
-8. 裁ち落としありを選んだユーザーへの注意喚起
 
 なお、暗いページのノンブルは自動で白抜きになります。
 
