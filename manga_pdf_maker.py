@@ -7,11 +7,13 @@ Claude Codeへの指示例：
   このフォルダのPNG画像をKDP用PDFにして
 """
 
+import io
 import sys
 from pathlib import Path
 from PIL import Image
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 
 SIZES = {
     "A5": (148 * mm, 210 * mm),
@@ -43,24 +45,13 @@ def get_png_files(input_dir: Path) -> list[Path]:
     return files
 
 
-def check_resolution(input_dir: Path):
-    png_files = get_png_files(input_dir)
-    print(f"\n=== 解像度チェック ({len(png_files)}ファイル) ===")
-    for png_path in png_files:
-        img = Image.open(png_path)
-        w_px, h_px = img.size
-        dpi_info = img.info.get("dpi", None)
-        dpi = round(dpi_info[0]) if dpi_info else "不明"
-        warning = " ⚠️ 300dpi未満" if isinstance(dpi, int) and dpi < 300 else ""
-        dpi_str = f"{dpi}dpi" if dpi != "不明" else "不明（メタデータなし）"
-        print(f"  {png_path.name}: {w_px}×{h_px}px / {dpi_str}{warning}")
-    print()
-
-
-def get_brightness(img: Image.Image) -> float:
-    gray = img.convert("L")
-    pixels = list(gray.getdata())
-    return sum(pixels) / len(pixels)
+def print_resolution_info(png_path: Path, img: Image.Image) -> None:
+    w_px, h_px = img.size
+    dpi_info = img.info.get("dpi", None)
+    dpi = round(dpi_info[0]) if dpi_info else "不明"
+    warning = " ⚠️ 300dpi未満" if isinstance(dpi, int) and dpi < 300 else ""
+    dpi_str = f"{dpi}dpi" if dpi != "不明" else "不明（メタデータなし）"
+    print(f"  {png_path.name}: {w_px}×{h_px}px / {dpi_str}{warning}")
 
 
 def get_local_brightness(img: Image.Image, page_w: float, page_h: float,
@@ -127,6 +118,7 @@ def make_pdf(input_dir, output_path, size_name, bleed, numbering,
     for i, png_path in enumerate(png_files):
         print(f"  処理中: {png_path.name} ({i+1}/{len(png_files)})")
         img = Image.open(png_path).convert("RGB")
+        print_resolution_info(png_path, img)
         img_w_px, img_h_px = img.size
 
         if add_margin:
@@ -145,9 +137,10 @@ def make_pdf(input_dir, output_path, size_name, bleed, numbering,
             x_offset = (page_w - scaled_w) / 2
             y_offset = (page_h - scaled_h) / 2
 
-        tmp_path = output_path.parent / f"_tmp_{i:04d}.jpg"
-        img.save(str(tmp_path), "JPEG", quality=95)
-        c.drawImage(str(tmp_path), x_offset, y_offset, width=scaled_w, height=scaled_h)
+        jpeg_buffer = io.BytesIO()
+        img.save(jpeg_buffer, "JPEG", quality=95)
+        jpeg_buffer.seek(0)
+        c.drawImage(ImageReader(jpeg_buffer), x_offset, y_offset, width=scaled_w, height=scaled_h)
 
         if numbering and i >= skip_pages:
             numbering_counter += 1
@@ -163,7 +156,6 @@ def make_pdf(input_dir, output_path, size_name, bleed, numbering,
                 draw_numbering(c, numbering_counter, page_w, page_h, dark_page, bleed)
 
         c.showPage()
-        tmp_path.unlink(missing_ok=True)
 
     c.save()
 
@@ -184,9 +176,6 @@ def main():
     if not png_files:
         print(f"エラー: {input_dir} にPNGファイルが見つかりません")
         sys.exit(1)
-
-    # 解像度チェック
-    check_resolution(input_dir)
 
     # 設定を対話で確認
     print("=== 設定を確認します ===\n")
