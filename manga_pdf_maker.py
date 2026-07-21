@@ -203,9 +203,9 @@ def main():
     white_filenames = []
     if numbering:
         stems = [p.stem for p in png_files]
-        print("  ヒント: 番号をつけたい最初のファイル名（例: 001）を入力してください")
+        print("  ヒント: 指定した画像が印字上の「1」ページ目になります（例: 001）")
         while True:
-            val = input("何番目のファイルからページ番号を開始しますか？（ファイル名の数字部分、例: 001）: ").strip()
+            val = input("1ページ目をどの画像から始めますか？（ファイル名の数字部分、例: 001）: ").strip()
             if not val:
                 val = stems[0]
             if val in stems:
