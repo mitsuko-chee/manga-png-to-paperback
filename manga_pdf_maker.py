@@ -20,6 +20,7 @@ SIZES = {
 
 BLEED_MM = 3
 MARGIN_MM = 10
+NUMBER_MARGIN_BOTTOM_MM = 6
 
 
 def get_page_size(size_name: str, bleed: bool):
@@ -62,11 +63,40 @@ def get_brightness(img: Image.Image) -> float:
     return sum(pixels) / len(pixels)
 
 
+def get_local_brightness(img: Image.Image, page_w: float, page_h: float,
+                          scale: float, x_offset: float, y_offset: float,
+                          bleed: bool) -> float:
+    """ノンブルが実際に乗る位置周辺だけを見て明度を判定する（ページ全体平均だと局所的な暗部を見逃すため）"""
+    b = BLEED_MM * mm if bleed else 0
+    cx = page_w / 2
+    cy = b + NUMBER_MARGIN_BOTTOM_MM * mm
+    half_w = 15 * mm
+    half_h = 6 * mm
+
+    img_w_px, img_h_px = img.size
+    ix_left = (cx - half_w - x_offset) / scale
+    ix_right = (cx + half_w - x_offset) / scale
+    iy_top = img_h_px - (cy + half_h - y_offset) / scale
+    iy_bottom = img_h_px - (cy - half_h - y_offset) / scale
+
+    ix_left = max(0, min(img_w_px, ix_left))
+    ix_right = max(0, min(img_w_px, ix_right))
+    iy_top = max(0, min(img_h_px, iy_top))
+    iy_bottom = max(0, min(img_h_px, iy_bottom))
+
+    if ix_right <= ix_left or iy_bottom <= iy_top:
+        return 255.0
+
+    crop = img.crop((int(ix_left), int(iy_top), int(ix_right), int(iy_bottom))).convert("L")
+    pixels = list(crop.getdata())
+    return sum(pixels) / len(pixels)
+
+
 def draw_numbering(c, page_num: int, page_w: float, page_h: float,
                    dark_page: bool, bleed: bool):
     b = BLEED_MM * mm if bleed else 0
     font_size = 10
-    margin_bottom = 8 * mm
+    margin_bottom = NUMBER_MARGIN_BOTTOM_MM * mm
     x = page_w / 2
     y = b + margin_bottom
     c.setFillColorRGB(1, 1, 1) if dark_page else c.setFillColorRGB(0, 0, 0)
@@ -126,7 +156,10 @@ def make_pdf(input_dir, output_path, size_name, bleed, numbering,
                 if all_white or stem in white_stems:
                     dark_page = True
                 else:
-                    dark_page = get_brightness(img) < dark_threshold
+                    local_brightness = get_local_brightness(
+                        img, page_w, page_h, scale, x_offset, y_offset, bleed
+                    )
+                    dark_page = local_brightness < dark_threshold
                 draw_numbering(c, numbering_counter, page_w, page_h, dark_page, bleed)
 
         c.showPage()
