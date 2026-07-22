@@ -22,7 +22,10 @@ SIZES = {
 
 BLEED_MM = 3
 MARGIN_MM = 10
-NUMBER_MARGIN_BOTTOM_MM = 6
+NUMBER_MARGIN_BOTTOM_MM = {
+    "A5": 8,
+    "B6": 6.35,
+}
 
 
 def get_page_size(size_name: str, bleed: bool):
@@ -56,11 +59,11 @@ def print_resolution_info(png_path: Path, img: Image.Image) -> None:
 
 def get_local_brightness(img: Image.Image, page_w: float, page_h: float,
                           scale: float, x_offset: float, y_offset: float,
-                          bleed: bool) -> float:
+                          bleed: bool, size_name: str) -> float:
     """ノンブルが実際に乗る位置周辺だけを見て明度を判定する（ページ全体平均だと局所的な暗部を見逃すため）"""
     b = BLEED_MM * mm if bleed else 0
     cx = page_w / 2
-    cy = b + NUMBER_MARGIN_BOTTOM_MM * mm
+    cy = b + NUMBER_MARGIN_BOTTOM_MM[size_name] * mm
     half_w = 15 * mm
     half_h = 6 * mm
 
@@ -84,10 +87,10 @@ def get_local_brightness(img: Image.Image, page_w: float, page_h: float,
 
 
 def draw_numbering(c, page_num: int, page_w: float, page_h: float,
-                   dark_page: bool, bleed: bool):
+                   dark_page: bool, bleed: bool, size_name: str):
     b = BLEED_MM * mm if bleed else 0
     font_size = 10
-    margin_bottom = NUMBER_MARGIN_BOTTOM_MM * mm
+    margin_bottom = NUMBER_MARGIN_BOTTOM_MM[size_name] * mm
     x = page_w / 2
     y = b + margin_bottom
     c.setFillColorRGB(1, 1, 1) if dark_page else c.setFillColorRGB(0, 0, 0)
@@ -150,10 +153,10 @@ def make_pdf(input_dir, output_path, size_name, bleed, numbering,
                     dark_page = True
                 else:
                     local_brightness = get_local_brightness(
-                        img, page_w, page_h, scale, x_offset, y_offset, bleed
+                        img, page_w, page_h, scale, x_offset, y_offset, bleed, size_name
                     )
                     dark_page = local_brightness < dark_threshold
-                draw_numbering(c, numbering_counter, page_w, page_h, dark_page, bleed)
+                draw_numbering(c, numbering_counter, page_w, page_h, dark_page, bleed, size_name)
 
         c.showPage()
 
