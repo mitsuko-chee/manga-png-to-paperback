@@ -60,6 +60,18 @@ curl -fsSL https://raw.githubusercontent.com/mitsuko-chee/manga-png-to-paperback
 
 ---
 
+## アップデート方法
+
+すでにインストール済みの方が最新版に更新したい場合は、インストール時と**同じコマンドをもう一度実行**してください。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mitsuko-chee/manga-png-to-paperback/main/install.sh | bash
+```
+
+`/manga-png-to-paperback アップデートして` のようにチャットで指示しても更新されません。スラッシュコマンドはローカルに保存済みのファイルを実行するだけで、GitHubの最新版を自動で取りに行く仕組みがないためです。上記コマンドを再実行してファイルを上書きしてください。
+
+---
+
 ## PNGフォルダのパスを調べる
 
 **Macの場合**
