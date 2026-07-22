@@ -12,13 +12,17 @@ Spotlight（⌘+スペース）で「ターミナル」と検索して開いて�
 
 ## 2. 作業フォルダを作る
 
-**Macの場合**
+すでにClaude Codeで使っているご自身の作業フォルダがある方は、新しく作らずそちらに `cd` していただいてOKです。
+
+以下は一例（フォルダ名は `my-workspace` でなくても構いません）です。
+
+**Macの場合（例）**
 ```
 mkdir ~/my-workspace
 cd ~/my-workspace
 ```
 
-**Windowsの場合**
+**Windowsの場合（例）**
 ```
 mkdir %USERPROFILE%\my-workspace
 cd %USERPROFILE%\my-workspace
