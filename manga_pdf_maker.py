@@ -48,6 +48,62 @@ def get_png_files(input_dir: Path) -> list[Path]:
     return files
 
 
+def check_page_sequence(files: list[Path]) -> list[str]:
+    """ファイル名の数字から欠番・重複を検出して警告文を返す。
+
+    並べ替えや自動修正は一切しない。Canvaでページを入れ替えた後に
+    書き出しファイル名が更新されない、手動リネームで番号が抜ける、
+    といった事故は「数字を信じて並べ替える」だけでは直せない
+    （間違った順番をそのまま正として確定させてしまうため）。
+    ここでは検出した順序を人間が目で確認できるようにするだけ。
+    """
+    import re
+
+    numbered: list[tuple[int, Path]] = []
+    unnumbered: list[Path] = []
+    for p in files:
+        m = re.search(r"\d+", p.stem)
+        if m:
+            numbered.append((int(m.group()), p))
+        else:
+            unnumbered.append(p)
+
+    warnings: list[str] = []
+
+    if unnumbered:
+        names = ", ".join(p.name for p in unnumbered)
+        warnings.append(f"番号が含まれないファイルがあります: {names}")
+
+    seen: dict[int, list[Path]] = {}
+    for num, p in numbered:
+        seen.setdefault(num, []).append(p)
+    for num, paths in sorted(seen.items()):
+        if len(paths) > 1:
+            names = ", ".join(p.name for p in paths)
+            warnings.append(f"番号 {num} が重複しています: {names}")
+
+    if seen:
+        nums = sorted(seen.keys())
+        missing = [n for n in range(nums[0], nums[-1] + 1) if n not in seen]
+        if missing:
+            warnings.append(f"抜けている番号があります: {', '.join(str(n) for n in missing)}")
+
+    return warnings
+
+
+def print_page_sequence(files: list[Path]) -> None:
+    print(f"\n検出したページ順序（{len(files)}枚）:")
+    for i, p in enumerate(files, start=1):
+        print(f"  {i:3d}. {p.name}")
+
+    warnings = check_page_sequence(files)
+    if warnings:
+        print("\n⚠️ ページ番号を確認してください（自動修正はしていません。正しい場合は無視してOK）:")
+        for w in warnings:
+            print(f"  - {w}")
+    print()
+
+
 def print_resolution_info(png_path: Path, img: Image.Image) -> None:
     w_px, h_px = img.size
     dpi_info = img.info.get("dpi", None)
@@ -179,6 +235,8 @@ def main():
     if not png_files:
         print(f"エラー: {input_dir} にPNGファイルが見つかりません")
         sys.exit(1)
+
+    print_page_sequence(png_files)
 
     # 設定を対話で確認
     print("=== 設定を確認します ===\n")
