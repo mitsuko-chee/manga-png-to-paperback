@@ -1,0 +1,4 @@
+interface:
+  display_name: "PNG→PDF制作チーム"
+  short_description: "PNG連番をKDPペーパーバックPDFへ変換"
+  default_prompt: "Use $manga-png-to-paperback to convert this numbered PNG folder into a KDP paperback PDF, checking page order, trim size, bleed, margins, page numbers, and final PDF size."
